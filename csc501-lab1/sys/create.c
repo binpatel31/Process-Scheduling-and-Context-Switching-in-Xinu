@@ -8,14 +8,17 @@
 #include <mem.h>
 #include <io.h>
 #include <stdio.h>
+#include <lab1.h>
 
 LOCAL int newpid();
+
+int scheduler;
 
 /*------------------------------------------------------------------------
  *  create  -  create a process to start running a procedure
  *------------------------------------------------------------------------
  */
-SYSCALL create(procaddr,ssize,priority,name,nargs,args)
+SYSCALL create(procaddr,ssize,priority,SCHEDULER,name,nargs,args)
 	int	*procaddr;		/* procedure address		*/
 	int	ssize;			/* stack size in words		*/
 	int	priority;		/* process priority > 0		*/
@@ -43,7 +46,10 @@ SYSCALL create(procaddr,ssize,priority,name,nargs,args)
 		restore(ps);
 		return(SYSERR);
 	}
-
+        //
+        scheduler=SCHEDULER;
+	kprintf("scheduler %d",scheduler);
+        //
 	numproc++;
 	pptr = &proctab[pid];
 

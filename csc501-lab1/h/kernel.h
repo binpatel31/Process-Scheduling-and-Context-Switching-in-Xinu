@@ -3,6 +3,10 @@
 #ifndef _KERNEL_H_
 #define _KERNEL_H_
 
+/* Practical 1 -- OS Constant */
+#define RANDOMSCHED 1
+#define PROPORTIONALSHARE 2
+
 /* Symbolic constants used throughout Xinu */
 
 typedef	char		Bool;		/* Boolean type			*/

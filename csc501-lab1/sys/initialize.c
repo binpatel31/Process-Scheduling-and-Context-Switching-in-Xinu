@@ -112,7 +112,7 @@ int nulluser()				/* babysit CPU when no one home */
 	open(CONSOLE, console_dev, 0);
 
 	/* create a process to execute the user's main program */
-	resume(create((int *)main,INITSTK,INITPRIO,INITNAME,INITARGS));
+	resume(create((int *)main,INITSTK,INITPRIO,1,INITNAME,INITARGS));
 
 	while (TRUE)
 		/* empty */;
