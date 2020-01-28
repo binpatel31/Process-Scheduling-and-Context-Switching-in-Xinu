@@ -47,8 +47,9 @@ SYSCALL create(procaddr,ssize,priority,SCHEDULER,name,nargs,args)
 		return(SYSERR);
 	}
         //
-        scheduler=SCHEDULER;
-	kprintf("scheduler %d",scheduler);
+//        scheduler=SCHEDULER;
+	setschedclass(SCHEDULER);
+//	kprintf("scheduler %d",getschedclass());
         //
 	numproc++;
 	pptr = &proctab[pid];
