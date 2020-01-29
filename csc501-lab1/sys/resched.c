@@ -15,45 +15,7 @@ extern int ctxsw(int, int, int, int);
  *			current process if other than PRREADY.
  *------------------------------------------------------------------------
  */
-/*
-void getMaxProcess(int *next, int *max){
-        *next = 0;
-        *max = 0;
 
-        int iter = q[rdytail].qprev;
-        while(iter != rdyhead){
-                if(proctab[iter].goodness > *max){
-                        *next = iter;
-                        *max = proctab[iter].goodness;
-                }
-                iter = q[iter].qprev;
-        }
-}
-void updateGoodness(){
-        int temp_process_id=0;
-        struct pentry *p;
-
-        while(temp_process_id<NPROC){
-                        p = &proctab[temp_process_id];
-                        if(p->pstate != PRFREE){
-	                   if(p->counter==0 || p->counter == p->quantum)
-								{
-									p->counter = p->pprio; 
-									p->quantum = p->counter;
-								}
-								else
-								{
-									p->counter = (p->counter) / 2 + p->pprio;
-									p->quantum=p->counter;
-								}
-                                
-                                p->goodness = p->pprio + p->counter;
-                        }
-                        temp_process_id++;
-                }
-//			preempt=optr->counter;
-	}
-*/
 int resched()
 {
 	register struct	pentry	*optr;	/* pointer to old process entry */
@@ -71,10 +33,8 @@ int resched()
 			insert(currpid,rdyhead,optr->pprio);
 		}
 	
-		//step 2 - finding sum of all priorities==============
-	
+		//step 2 - finding sum of all priorities==============	
 	 	int node = q[rdyhead].qnext;
-		
 		while(node != rdytail)
 		{
 			sum=sum+q[node].qkey;
