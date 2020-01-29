@@ -60,6 +60,11 @@ struct	pentry	{
 	int	fildes[_NFILE];		/* file - device translation	*/
 	int	ppagedev;		/* pageing dgram device		*/
 	int	pwaitret;
+//NEW properties of process
+	int     goodness;               /* To select process with highest goodness*/
+	int     counter;                /* Allowed run time for process */
+	int     quantum;
+
 };
 
 

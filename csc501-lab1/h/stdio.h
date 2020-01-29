@@ -12,7 +12,7 @@ int strncmp(char *, char *, int);
 char *strncpy(char *s1, char *s2, int n);
 char *strcpy(char *, const char *);
 char *strchr(const char *s, int c);
-int create(int *, int, int, int, char *, int, long, ...);
+int create(int *, int, int, char *, int, long, ...);
 int disable(short *);
 int restore(short *);
 int freebuf(void *);

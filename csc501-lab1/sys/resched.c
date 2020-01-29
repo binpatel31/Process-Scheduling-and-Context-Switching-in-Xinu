@@ -15,6 +15,45 @@ extern int ctxsw(int, int, int, int);
  *			current process if other than PRREADY.
  *------------------------------------------------------------------------
  */
+/*
+void getMaxProcess(int *next, int *max){
+        *next = 0;
+        *max = 0;
+
+        int iter = q[rdytail].qprev;
+        while(iter != rdyhead){
+                if(proctab[iter].goodness > *max){
+                        *next = iter;
+                        *max = proctab[iter].goodness;
+                }
+                iter = q[iter].qprev;
+        }
+}
+void updateGoodness(){
+        int temp_process_id=0;
+        struct pentry *p;
+
+        while(temp_process_id<NPROC){
+                        p = &proctab[temp_process_id];
+                        if(p->pstate != PRFREE){
+	                   if(p->counter==0 || p->counter == p->quantum)
+								{
+									p->counter = p->pprio; 
+									p->quantum = p->counter;
+								}
+								else
+								{
+									p->counter = (p->counter) / 2 + p->pprio;
+									p->quantum=p->counter;
+								}
+                                
+                                p->goodness = p->pprio + p->counter;
+                        }
+                        temp_process_id++;
+                }
+//			preempt=optr->counter;
+	}
+*/
 int resched()
 {
 	register struct	pentry	*optr;	/* pointer to old process entry */
@@ -99,5 +138,144 @@ int resched()
 		return OK;
 	}
 	
+	else if (getschedclass()==LINUXSCHED)
+	{
+		// step 1 - update goodness and do all checks for previous process
+		//================================================================
+		optr = &proctab[currpid];
+		int max_goodness=0;
+		int max_goodness_pid=0;
+               	
+		//update the current process goodness at each clock tick ---not per epoch 
+                optr->goodness = optr->goodness - optr->counter + preempt;
+                
+		//check for time exhaust
+		if (currpid == NULLPROC || preempt <= 0) 
+		{    
+		 //this means when the null process is there or prempt = 0 means used all the allocated time.
+                        optr->goodness = 0;
+			optr->counter = 0;
+                } 
+                else
+                {
+        	         optr->counter = preempt;
+                }
+		
 
+		// step 2 - find max goodness process to run
+                //===============================================================
+                
+		int process = q[rdyhead].qnext;
+		while(process != rdytail)
+		{
+			if (proctab[process].goodness > max_goodness)
+			{
+				max_goodness = proctab[process].goodness;
+				max_goodness_pid = process; 
+			}
+			process = q[process].qnext;	
+		}
+
+		// START OF NEW EPOCH if no process is running and goodness of all=0 or allocated time exhausted 
+                if(max_goodness==0 && (optr->pstate != PRCURR || optr->counter == 0))
+		{     
+			process=0;
+			if(NPROC > 0)  //update all process goodness and counter
+			{
+				while(process < NPROC)
+				{
+					if(proctab[process].pstate != PRFREE)
+					{
+						//for process never executed or exhausted time quantum ...then quantum is = priority for new epoch
+						if(proctab[process].counter== (0 || proctab[process].quantum))
+						{
+							proctab[process].counter = proctab[process].pprio;
+						}
+						else
+						{
+							proctab[process].counter = proctab[process].pprio + ((proctab[process].counter)/2);
+						}
+						 proctab[process].quantum = proctab[process].counter;
+						 proctab[process].goodness = proctab[process].pprio + proctab[process].counter;
+					}
+					++process;
+				}
+			}
+                	preempt=optr->counter;       
+			
+			if (max_goodness == 0 && currpid != NULLPROC) 
+			{
+                         	 //context switch as it's time quantum is up
+                                if (optr->pstate == PRCURR) 
+				{
+                                        optr->pstate = PRREADY;
+                                        insert(currpid, rdyhead, optr->pprio);
+                                }
+                                nptr = &proctab[NULLPROC];
+                                nptr->pstate = PRCURR;
+                                dequeue(NULLPROC);
+                                currpid = NULLPROC;
+                                #ifdef  RTCLOCK
+                                        preempt = QUANTUM;
+                                #endif
+                                ctxsw((int) &optr->pesp, (int) optr->pirmask, (int) &nptr->pesp, (int) nptr->pirmask);
+                                return OK;
+                        }
+			if(max_goodness==0 && currpid == NULLPROC)
+			{
+				return OK;
+			} 
+
+                }
+		
+		//if current process used all it's quota or not have max goodness or is not running then switch it with max_goodness process 
+		else if ((optr->pstate != PRCURR || optr->counter == 0 || optr->goodness < max_goodness) && max_goodness>0) 
+		{
+			//context switch if this is the case AND USE PROCESS WITH MAX GOODNESS
+                        if (optr->pstate == PRCURR) 
+			{
+                                optr->pstate = PRREADY;
+                                insert(currpid, rdyhead, optr->pprio);
+                        }
+                        nptr = &proctab[max_goodness_pid];
+                        nptr->pstate = PRCURR;
+                        dequeue(max_goodness_pid);
+                        currpid = max_goodness_pid;
+                        preempt = nptr->counter;
+                        ctxsw((int) &optr->pesp, (int) optr->pirmask, (int) &nptr->pesp, (int) nptr->pirmask);
+                	return OK;
+                }
+
+		else //if (optr->goodness > 0 && optr->goodness >= max && optr->pstate == PRCURR) {
+                {   
+			preempt = optr->counter;
+                        return OK;
+                } 
+	}
+	else
+	{	//DEFAULT XINU SCHEDULING
+		if ( ( (optr= &proctab[currpid])->pstate == PRCURR) &&(lastkey(rdytail)<optr->pprio)) 
+		{
+			return(OK);
+		}
+		/* force context switch */
+		if (optr->pstate == PRCURR) 
+		{
+			optr->pstate = PRREADY;
+			insert(currpid,rdyhead,optr->pprio);
+		}
+		/* remove highest priority process at end of ready list */
+		nptr = &proctab[ (currpid = getlast(rdytail)) ];
+		nptr->pstate = PRCURR;		/* mark it currently running	*/
+		#ifdef	RTCLOCK
+			preempt = QUANTUM;		/* reset preemption counter	*/
+		#endif
+	
+		ctxsw((int)&optr->pesp, (int)optr->pirmask, (int)&nptr->pesp, (int)nptr->pirmask);
+	
+		/* The OLD process returns here when resumed. */
+		return OK;
+	}	
+	return OK;
 }
+

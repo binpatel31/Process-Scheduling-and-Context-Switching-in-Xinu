@@ -20,7 +20,6 @@ SYSCALL resume(int pid)
 		restore(ps);
 		return(SYSERR);
 	}
-//	kprintf("breakpoint resume.c 2\n");
 	prio = pptr->pprio;
 	ready(pid, RESCHYES);
 	restore(ps);

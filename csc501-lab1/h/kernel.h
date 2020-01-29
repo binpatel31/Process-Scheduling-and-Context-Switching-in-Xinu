@@ -5,7 +5,7 @@
 
 /* Practical 1 -- OS Constant */
 #define RANDOMSCHED 1
-#define PROPORTIONALSHARE 2
+#define LINUXSCHED 2
 
 /* Symbolic constants used throughout Xinu */
 
