@@ -8,7 +8,6 @@
 #include <mem.h>
 #include <io.h>
 #include <stdio.h>
-#include <lab1.h>
 
 LOCAL int newpid();
 
